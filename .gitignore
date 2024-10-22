@@ -1,0 +1,6 @@
+.coverage
+.vscode
+.vscode/*
+.env
+tasks.json
+notes.json

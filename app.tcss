@@ -1,0 +1,111 @@
+Screen {
+    margin: 0 0;
+    display: None;
+    overflow-y: hidden;
+}
+
+#header-container {
+    height: 10%; 
+    padding-bottom: 0;
+    margin-bottom: 0;
+    margin-top: 0;
+}
+
+#dialog{
+    height: 100%; 
+    padding-bottom: 0;
+    margin-bottom: 0;
+    margin-top: 0;
+    overflow-y: hidden;
+}
+
+#dialog{
+    height: 100%; 
+    padding-bottom: 0;
+    margin-bottom: 0;
+    margin-top: 0;
+    overflow-y: hidden;
+}
+#tasks-list{
+    background: #121212;
+    scrollbar-color: purple;
+    scrollbar-size: 1 1;
+    padding-top: 0;
+    margin-top: 0;
+}
+
+#tasks-list .--highlight{
+    background: #121212;
+    padding-left: 1;
+}
+
+TaskApp Button{
+    color: green;
+}
+
+#note-container {
+    height: 90;
+    transition: height 500ms in_out_cubic;
+    overflow: hidden;
+}
+
+#note-container.hidden {
+    height: 0; 
+
+    display: block; 
+}
+
+#note-area:focus {
+    border: none; 
+}
+
+#task-item {
+    padding: 1 0; 
+
+}
+
+.task-section-container{
+    height: 1;
+    width: 100%;
+
+}
+
+
+.task-title {
+    width: 80%;
+    text-style: bold;
+    padding-left: 1;
+
+}
+
+.task-due-date {
+    width: 80%;
+    padding-left: 1;
+}
+
+.task-status {
+    width: 20%;
+    padding: 0 1;
+}
+
+.low-priority {
+    color: green;
+    padding: 0 1;
+}
+
+.medium-priority {
+    color: yellow;
+    padding: 0 1;
+}
+
+.high-priority {
+    text-style: bold;
+    color: orange;
+    padding: 0 1;
+}
+
+.urgent-priority {
+    text-style: bold;
+    color: red;
+    padding: 0 1;
+}
