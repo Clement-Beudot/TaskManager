@@ -103,6 +103,7 @@ class TaskManagerApp(App):
         self.task_title_input = Input(placeholder="Enter task title")
         self.task_priority_input = Select(options=[(priority, priority) for priority in ["Low", "Medium", "High", "Urgent"]], allow_blank=False)
         self.task_due_date_input = Input(placeholder="Due Date (dd-mm-yyyy)")
+        self.database_action = "create"
 
         self.dialog = Container(
             Static("Create New Task"),
@@ -115,56 +116,8 @@ class TaskManagerApp(App):
             ),
             id="dialog",
         )
-
         await self.mount(self.dialog, before=self.query_one("#tasks-list"))
         self.task_title_input.focus()
-
-    async def on_button_pressed(self, event: Button.Pressed):
-        """Handle actions when buttons are pressed"""
-        button_id = event.button.id
-        if button_id == "task-create-button":
-            title = self.task_title_input.value.strip()
-            priority = self.task_priority_input.value
-            due_date = self.task_due_date_input.value.strip()
-
-            if due_date:
-                matched_date = self.task_service.match_input_to_date(due_date)
-                if matched_date:
-                    due_date = matched_date
-            else:
-                due_date = self.task_service.get_default_due_date()
-
-            if title:
-                self.task_service.create_task(title, priority, due_date)
-                await self.update_tasks_view()
-            await self.dialog.remove()
-
-        elif button_id == "task-update-button":
-            title = self.task_title_input.value.strip()
-            priority = self.task_priority_input.value
-            status = self.task_status_input.value
-            due_date = self.task_due_date_input.value.strip()
-
-            if due_date:
-                matched_date = self.task_service.match_input_to_date(due_date)
-                if matched_date:
-                    due_date = matched_date
-            else:
-                due_date = self.task_service.get_default_due_date()
-            if title:
-                self.task_service.update_task(
-                    self.selected_task_index, 
-                    title=title, 
-                    priority=priority, 
-                    status=status, 
-                    due_date=due_date
-                )
-                await self.update_tasks_view()
-
-            await self.dialog.remove()
-
-        elif button_id == "dialog-cancel-button":
-            await self.dialog.remove()
 
     async def action_open_update_task_dialog(self):
         """Open panel to modify a selected task"""
@@ -178,6 +131,7 @@ class TaskManagerApp(App):
         self.task_status_input = Select(options=[(status, status) for status in ["To-do", "In progress", "Done", "Blocked"]], value=task.status, allow_blank=False)
         self.task_priority_input = Select(options=[(priority, priority) for priority in ["Low", "Medium", "High", "Urgent"]], value=task.priority, allow_blank=False)
         self.task_due_date_input = Input(value=task.due_date)
+        self.database_action = "update"
 
         self.dialog = Container(
             Static(f"Edit {task.title}"),
@@ -191,9 +145,40 @@ class TaskManagerApp(App):
             ),
             id="dialog",
         )
-
         await self.mount(self.dialog, before=self.query_one("#tasks-list"))
         self.task_title_input.focus()
+
+    async def on_button_pressed(self, event: Button.Pressed):
+        """Handle actions when buttons are pressed"""
+        button_id = event.button.id
+        if button_id == "task-update-button" or button_id == "task-create-button":
+            await self.handle_task_form_submission()
+
+        elif button_id == "dialog-cancel-button":
+            await self.dialog.remove()
+
+    async def handle_task_form_submission(self):
+        title = self.task_title_input.value.strip()
+        priority = self.task_priority_input.value.strip()
+        due_date = self.task_due_date_input.value.strip()
+
+        if title:
+            if self.database_action == "create":
+                self.task_service.create_task(
+                    title = title, 
+                    priority = priority, 
+                    due_date = due_date
+                )
+            elif self.database_action == "update":
+                self.task_service.update_task(
+                    index = self.selected_task_index, 
+                    title = title, 
+                    priority = priority, 
+                    status = self.task_status_input.value, 
+                    due_date = due_date
+                )
+            await self.update_tasks_view()
+        await self.dialog.remove()
 
     async def on_key(self, event):
         """Handle keyboard shortcuts, including hiding the note area"""
@@ -204,6 +189,11 @@ class TaskManagerApp(App):
                 await self.dialog.remove()
             if self.task_list:
                 self.task_list.focus()
+        if event.key == "enter":
+            if hasattr(self, "dialog") and isinstance(self.focused, Input): 
+                await self.handle_task_form_submission()
+            #else: 
+            #    await self.action_mark_task_done()
 
 if __name__ == "__main__":
     app = TaskManagerApp()

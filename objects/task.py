@@ -5,7 +5,7 @@ class Task:
     def __init__(self, title, priority, due_date, status="To-do"):
         self.title = title
         self.priority = priority
-        self.due_date = due_date or DATE_MAPPINGS.get("tomorrow")
+        self.due_date = due_date or datetime.now()
         self.status = status
 
     def is_overdue(self):

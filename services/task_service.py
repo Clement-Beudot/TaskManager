@@ -30,11 +30,9 @@ class TaskService:
             "risky_tasks": len(risky_tasks),
         }
 
-    def format_task_view(self, task):
-        return f"{task.title} - {task.priority} - Due: {task.due_date}"
 
     def create_task(self, title, priority, due_date):
-        new_task = Task(title, priority, due_date)
+        new_task = Task(title, priority, self.process_due_date(due_date))
         self.tasks.append(new_task)
         self.save_tasks()
 
@@ -51,7 +49,7 @@ class TaskService:
         if status:
             task.status = status
         if due_date:
-            task.due_date = due_date
+            task.due_date = self.process_due_date(due_date)
 
         self.save_tasks()
 
@@ -62,9 +60,23 @@ class TaskService:
     def match_input_to_date(self, input_text):
         input_text = input_text.lower()
         for key in DATE_MAPPINGS:
-            if key.startswith(input_text):
+            if input_text != "" and key.startswith(input_text):
                 return DATE_MAPPINGS[key]
         return None
     
     def get_default_due_date(self):
         return datetime.now().strftime("%d-%m-%Y")
+    
+    def is_valid_date(self, date_str):
+        if not date_str: 
+            return False
+        try:
+            datetime.strptime(date_str, "%d-%m-%Y")
+            return True
+        except ValueError:
+            return False
+        
+    def process_due_date(self, due_date=None):
+        if due_date and self.is_valid_date(due_date):
+            return due_date
+        return self.match_input_to_date(due_date) if self.match_input_to_date(due_date) else self.get_default_due_date()
