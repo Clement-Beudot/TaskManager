@@ -5,6 +5,7 @@ from textual.widgets import Button, Input, Static, Footer, Select, ListView, Lis
 from services.task_service import TaskService
 from services.note_service import NoteService
 from utils.json_utils import load_json, save_json
+from utils.date_utils import to_string, to_date, today
 
 TASKS_FILE = "tasks.json"
 NOTES_FILE = "notes.json"
@@ -53,7 +54,7 @@ class TaskManagerApp(App):
         else:
             for task in self.tasks:
                 task_title = task.title
-                task_due_date = task.due_date
+                task_due_date = to_string(task.due_date)
                 task_status = task.status
 
                 top_container = Horizontal(
@@ -101,6 +102,7 @@ class TaskManagerApp(App):
     async def action_open_create_task_dialog(self):
         """Open the dialog to create a new task"""
         self.task_title_input = Input(placeholder="Enter task title")
+        self.task_description_input = TextArea(id="task-description")
         self.task_priority_input = Select(options=[(priority, priority) for priority in ["Low", "Medium", "High", "Urgent"]], allow_blank=False)
         self.task_due_date_input = Input(placeholder="Due Date (dd-mm-yyyy)")
         self.database_action = "create"
@@ -108,6 +110,7 @@ class TaskManagerApp(App):
         self.dialog = Container(
             Static("Create New Task"),
             self.task_title_input,
+            self.task_description_input,
             self.task_priority_input,
             self.task_due_date_input,
             Horizontal(
@@ -130,7 +133,7 @@ class TaskManagerApp(App):
         self.task_title_input = Input(value=task.title)
         self.task_status_input = Select(options=[(status, status) for status in ["To-do", "In progress", "Done", "Blocked"]], value=task.status, allow_blank=False)
         self.task_priority_input = Select(options=[(priority, priority) for priority in ["Low", "Medium", "High", "Urgent"]], value=task.priority, allow_blank=False)
-        self.task_due_date_input = Input(value=task.due_date)
+        self.task_due_date_input = Input(value=to_string(task.due_date))
         self.database_action = "update"
 
         self.dialog = Container(

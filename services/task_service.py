@@ -1,6 +1,7 @@
 from objects.task import Task
 from utils.json_utils import save_json
 from utils.mapper.date_mapper import DATE_MAPPINGS
+from utils.date_utils import to_string, to_date, today
 from datetime import datetime
 
 TASKS_FILE = "tasks.json"
@@ -22,7 +23,7 @@ class TaskService:
         open_tasks = [task for task in self.tasks if task.status != "Done"]
         overdue_tasks = [task for task in open_tasks if task.is_overdue()]
         high_priority_tasks = [task for task in open_tasks if task.priority in ["High", "Urgent"]]
-        risky_tasks = [task for task in open_tasks if task.is_overdue()]
+        risky_tasks = [task for task in open_tasks if task.is_at_risk()]
         return {
             "open_tasks": len(open_tasks),
             "overdue_tasks": len(overdue_tasks),
@@ -31,12 +32,12 @@ class TaskService:
         }
 
 
-    def create_task(self, title, priority, due_date):
-        new_task = Task(title, priority, self.process_due_date(due_date))
+    def create_task(self, title, priority, due_date, description=""):
+        new_task = Task(title, priority, self.process_due_date(due_date), description)
         self.tasks.append(new_task)
         self.save_tasks()
 
-    def update_task(self, index, title=None, priority=None, status=None, due_date=None):
+    def update_task(self, index, title=None, priority=None, status=None, due_date=None, description=None):
         """Update an existing task"""
         if index < 0 or index >= len(self.tasks):
             raise IndexError("Tax Index is out of bound")
@@ -50,6 +51,8 @@ class TaskService:
             task.status = status
         if due_date:
             task.due_date = self.process_due_date(due_date)
+        if description:
+            task.description = description
 
         self.save_tasks()
 
@@ -61,22 +64,24 @@ class TaskService:
         input_text = input_text.lower()
         for key in DATE_MAPPINGS:
             if input_text != "" and key.startswith(input_text):
-                return DATE_MAPPINGS[key]
+                return to_date(DATE_MAPPINGS[key])
         return None
     
     def get_default_due_date(self):
-        return datetime.now().strftime("%d-%m-%Y")
+        return today()
     
     def is_valid_date(self, date_str):
         if not date_str: 
             return False
-        try:
-            datetime.strptime(date_str, "%d-%m-%Y")
-            return True
-        except ValueError:
-            return False
+        return to_date(date_str) is not None
         
     def process_due_date(self, due_date=None):
-        if due_date and self.is_valid_date(due_date):
+        if isinstance(due_date, datetime):
             return due_date
-        return self.match_input_to_date(due_date) if self.match_input_to_date(due_date) else self.get_default_due_date()
+        elif isinstance(due_date, str) and self.is_valid_date(due_date):
+            return to_date(due_date)
+        elif isinstance(due_date, str):
+            mapped_date = self.match_input_to_date(due_date)
+            if mapped_date:
+                return mapped_date
+        return self.get_default_due_date()

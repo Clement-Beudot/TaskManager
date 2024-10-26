@@ -1,17 +1,27 @@
-from datetime import datetime
-from utils.mapper.date_mapper import DATE_MAPPINGS
+from utils.date_utils import to_string, to_date, today, max_at_risk_date
 
 class Task:
-    def __init__(self, title, priority, due_date, status="To-do"):
+    def __init__(self,
+                title = "", 
+                priority = "Low", 
+                due_date = None, 
+                description="", 
+                status="To-do"
+                ):
         self.title = title
+        self.description = description
         self.priority = priority
-        self.due_date = due_date or datetime.now()
+        self.due_date = to_date(due_date)
         self.status = status
 
     def is_overdue(self):
         if self.due_date:
-            due_date = datetime.strptime(self.due_date, "%d-%m-%Y")
-            return due_date < datetime.now()
+            return to_date(self.due_date) < today()
+        return False
+    
+    def is_at_risk(self):
+        if self.due_date:
+            return (to_date(self.due_date) < max_at_risk_date() and to_date(self.due_date) >= today())
         return False
 
     def mark_as_done(self):
@@ -20,16 +30,18 @@ class Task:
     def to_dict(self):
         return {
             "title": self.title,
+            "description": self.description,
             "priority": self.priority,
-            "due_date": self.due_date,
+            "due_date": to_string(self.due_date),
             "status": self.status,
         }
 
     @staticmethod
     def from_dict(data):
         return Task(
-            title=data["title"],
-            priority=data["priority"],
-            due_date=data["due_date"],
-            status=data["status"]
+            title = data["title"],
+            description = data.get("description", ""),
+            priority = data["priority"],
+            due_date = to_date(data["due_date"]),
+            status = data["status"]
         )
