@@ -15,9 +15,9 @@ class TaskManagerApp(App):
 
     BINDINGS = [
         ("c", "open_create_task_dialog", "Add"),
-        ("e", "open_update_task_dialog", "Update task"),
+        ("e", "open_update_task_dialog", "Edit task"),
         ("s", "open_dialog", "Change Status"),
-        #("n", "toggle_notes", "Toggle Notes"), 
+        ("n", "toggle_notes", "Toggle Notes"), 
         Binding("ctrl+q", "app.quit", "Quit", show=True),
     ]
     
@@ -131,6 +131,7 @@ class TaskManagerApp(App):
         self.selected_task_index = selected_item
         task = self.task_service.get_task_by_index(selected_item)
         self.task_title_input = Input(value=task.title)
+        self.task_description_input = TextArea(task.description, id="task-description")
         self.task_status_input = Select(options=[(status, status) for status in ["To-do", "In progress", "Done", "Blocked"]], value=task.status, allow_blank=False)
         self.task_priority_input = Select(options=[(priority, priority) for priority in ["Low", "Medium", "High", "Urgent"]], value=task.priority, allow_blank=False)
         self.task_due_date_input = Input(value=to_string(task.due_date))
@@ -139,6 +140,7 @@ class TaskManagerApp(App):
         self.dialog = Container(
             Static(f"Edit {task.title}"),
             self.task_title_input,
+            self.task_description_input,
             self.task_status_input,
             self.task_priority_input,
             self.task_due_date_input,
@@ -164,13 +166,15 @@ class TaskManagerApp(App):
         title = self.task_title_input.value.strip()
         priority = self.task_priority_input.value.strip()
         due_date = self.task_due_date_input.value.strip()
+        description = self.task_description_input.text.strip()
 
         if title:
             if self.database_action == "create":
                 self.task_service.create_task(
                     title = title, 
                     priority = priority, 
-                    due_date = due_date
+                    due_date = due_date, 
+                    description = description
                 )
             elif self.database_action == "update":
                 self.task_service.update_task(
@@ -178,7 +182,8 @@ class TaskManagerApp(App):
                     title = title, 
                     priority = priority, 
                     status = self.task_status_input.value, 
-                    due_date = due_date
+                    due_date = due_date,
+                    description = description
                 )
             await self.update_tasks_view()
         await self.dialog.remove()
