@@ -36,7 +36,7 @@ class TaskManagerApp(App):
         self.task_list = ListView(id="tasks-list")
         yield self.task_list
         
-        self.note_area = TextArea(self.note_service.notes.content, id="note-area")
+        self.note_area = TextArea(self.note_service.notes, id="note-area")
         yield Container(self.note_area, id="note-container", classes="hidden")
         
         yield Footer()
