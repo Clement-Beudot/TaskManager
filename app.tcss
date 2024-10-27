@@ -34,9 +34,27 @@ Screen {
     margin-top: 0;
 }
 
-#tasks-list .--highlight{
+#tasks-list ListItem{
+    border: round white 70%;
     background: #121212;
-    padding-left: 1;
+}
+
+#tasks-list .--highlight{
+    border: round green 100%;
+    background: #121212;
+    margin-left: 1;
+}
+
+#tasks-list .section-header{
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    border-bottom: solid white;
+    background: #121212 100%;
+    padding-left: 35;
+    text-style: bold;
+    margin-top: 2;
+    margin-bottom: 1;
 }
 
 TaskApp Button{

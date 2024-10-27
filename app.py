@@ -47,34 +47,47 @@ class TaskManagerApp(App):
         await self.update_header()
 
     async def update_tasks_view(self):
-        self.task_list.clear()
+        while self.task_list.children:
+            await self.task_list.children[0].remove()
+        open_tasks = [task for task in self.tasks if task.status != "Done"]
+        done_tasks = [task for task in self.tasks if task.status == "Done"]
 
-        if not self.tasks:
-            self.task_list.append(ListItem(Static("No tasks")))
-        else:
-            for task in self.tasks:
-                task_title = task.title
-                task_due_date = to_string(task.due_date)
-                task_status = task.status
+        if open_tasks:
+            self.task_list.append(ListItem(Static(f"Open Tasks [ {len(open_tasks)} ]"), classes="section-header"))
+            for task in open_tasks:
+                self._add_task_to_list(task)
 
-                top_container = Horizontal(
-                    Static(task_title, classes="task-title"),
-                    Static(task.priority, classes=f"{task.priority.lower()}-priority"),
-                    classes="task-section-container"
-                )
-                bottom_container = Horizontal(
-                    Static(task_due_date, classes="task-due-date"),
-                    Static(task_status, classes="task-status"),
-                    classes="task-section-container"
-                )
-                task_item = Container(
-                    top_container,
-                    bottom_container,
-                    id="task-item"
-                )
-                self.task_list.append(ListItem(task_item))
+        if done_tasks:
+            self.task_list.append(ListItem(Static(f"Completed Tasks [ {len(done_tasks)} ]"), classes="section-header"))
+            for task in done_tasks:
+                self._add_task_to_list(task)
+
         await self.update_header()
         self.task_list.focus()
+
+    def _add_task_to_list(self, task):
+        """Add a task to Task List with it associated Id"""
+        task_title = task.title
+        task_due_date = to_string(task.due_date)
+        task_status = task.status
+
+        top_container = Horizontal(
+            Static(task_title, classes="task-title"),
+            Static(task.priority, classes=f"{task.priority.lower()}-priority"),
+            classes="task-section-container"
+        )
+        bottom_container = Horizontal(
+            Static(task_due_date, classes="task-due-date"),
+            Static(task_status, classes="task-status"),
+            classes="task-section-container"
+        )
+        task_item = Container(
+            top_container,
+            bottom_container,
+            id=f"task-item-{task.id}" 
+        )
+        list_item = ListItem(task_item, id=f"task_id-{task.id}")
+        self.task_list.append(list_item)
 
     async def update_header(self):
         """Update the header with task statistics"""
@@ -125,17 +138,22 @@ class TaskManagerApp(App):
     async def action_open_update_task_dialog(self):
         """Open panel to modify a selected task"""
         selected_item = self.task_list.index
-        if selected_item is None or selected_item >= len(self.task_service.get_all_tasks()):
+        if selected_item is None:
             return
-
-        self.selected_task_index = selected_item
-        task = self.task_service.get_task_by_index(selected_item)
+        task_item = self.task_list.children[selected_item]
+        if not task_item.id or not task_item.id.startswith("task_id-"):
+            return
+        task_id = task_item.id.replace("task_id-", "")
+        task = self.task_service.get_task_by_id(task_id)
+        if not task:
+            return
         self.task_title_input = Input(value=task.title)
         self.task_description_input = TextArea(task.description, id="task-description")
         self.task_status_input = Select(options=[(status, status) for status in ["To-do", "In progress", "Done", "Blocked"]], value=task.status, allow_blank=False)
         self.task_priority_input = Select(options=[(priority, priority) for priority in ["Low", "Medium", "High", "Urgent"]], value=task.priority, allow_blank=False)
         self.task_due_date_input = Input(value=to_string(task.due_date))
         self.database_action = "update"
+        self.selected_task_id = task_id
 
         self.dialog = Container(
             Static(f"Edit {task.title}"),
@@ -178,7 +196,7 @@ class TaskManagerApp(App):
                 )
             elif self.database_action == "update":
                 self.task_service.update_task(
-                    index = self.selected_task_index, 
+                    task_id = self.selected_task_id,
                     title = title, 
                     priority = priority, 
                     status = self.task_status_input.value, 

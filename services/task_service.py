@@ -13,11 +13,12 @@ class TaskService:
     def get_all_tasks(self):
         return self.tasks
     
-    def get_task_by_index(self, index):
-        """Return the task that by his index in task-list"""
-        if index < 0 or index >= len(self.tasks):
-            raise IndexError("Index is out of bound")
-        return self.tasks[index]
+    def get_task_by_id(self, task_id):
+        """Get a task by Id"""
+        for task in self.tasks:
+            if task.id == task_id:
+                return task
+        return None
 
     def get_task_statistics(self):
         open_tasks = [task for task in self.tasks if task.status != "Done"]
@@ -37,24 +38,22 @@ class TaskService:
         self.tasks.append(new_task)
         self.save_tasks()
 
-    def update_task(self, index, title=None, priority=None, status=None, due_date=None, description=None):
+    def update_task(self, task_id, title=None, priority=None, status=None, due_date=None, description=None):
         """Update an existing task"""
-        if index < 0 or index >= len(self.tasks):
-            raise IndexError("Tax Index is out of bound")
+        task = self.get_task_by_id(task_id)
         
-        task = self.tasks[index]
-        if title:
-            task.title = title
-        if priority:
-            task.priority = priority
-        if status:
-            task.status = status
-        if due_date:
-            task.due_date = self.process_due_date(due_date)
-        if description:
-            task.description = description
-
-        self.save_tasks()
+        if task :
+            if title:
+                task.title = title
+            if priority:
+                task.priority = priority
+            if status:
+                task.status = status
+            if due_date:
+                task.due_date = self.process_due_date(due_date)
+            if description:
+                task.description = description
+            self.save_tasks()
 
     def save_tasks(self):
         tasks_data = [task.to_dict() for task in self.tasks]

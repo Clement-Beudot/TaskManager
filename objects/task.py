@@ -1,4 +1,5 @@
 from utils.date_utils import to_string, to_date, today, max_at_risk_date
+from uuid import uuid4
 
 class Task:
     def __init__(self,
@@ -6,8 +7,10 @@ class Task:
                 priority = "Low", 
                 due_date = None, 
                 description="", 
-                status="To-do"
+                status="To-do",
+                task_id=None
                 ):
+        self.id = task_id or str(uuid4()) 
         self.title = title
         self.description = description
         self.priority = priority
@@ -29,6 +32,7 @@ class Task:
 
     def to_dict(self):
         return {
+            "id": self.id,
             "title": self.title,
             "description": self.description,
             "priority": self.priority,
@@ -39,6 +43,7 @@ class Task:
     @staticmethod
     def from_dict(data):
         return Task(
+            task_id=data["id"],
             title = data["title"],
             description = data.get("description", ""),
             priority = data["priority"],
