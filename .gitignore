@@ -4,3 +4,4 @@
 .env
 tasks.json
 notes.json
+tests.py

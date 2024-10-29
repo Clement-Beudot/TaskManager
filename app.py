@@ -6,6 +6,8 @@ from services.task_service import TaskService
 from services.note_service import NoteService
 from utils.json_utils import load_json, save_json
 from utils.date_utils import to_string, to_date, today
+from screens.status_screen import StatusScreen
+from utils.mapper.task_mapper import STATUS_NAMES, STATUS_LABELS
 
 TASKS_FILE = "tasks.json"
 NOTES_FILE = "notes.json"
@@ -16,7 +18,7 @@ class TaskManagerApp(App):
     BINDINGS = [
         ("c", "open_create_task_dialog", "Add"),
         ("e", "open_update_task_dialog", "Edit task"),
-        ("s", "open_dialog", "Change Status"),
+        ("s", "open_status_dialog", "Change Status"),
         ("n", "toggle_notes", "Toggle Notes"), 
         Binding("ctrl+q", "app.quit", "Quit", show=True),
     ]
@@ -149,7 +151,7 @@ class TaskManagerApp(App):
             return
         self.task_title_input = Input(value=task.title)
         self.task_description_input = TextArea(task.description, id="task-description")
-        self.task_status_input = Select(options=[(status, status) for status in ["To-do", "In progress", "Done", "Blocked"]], value=task.status, allow_blank=False)
+        self.task_status_input = Select(options=[(status, status) for status in STATUS_LABELS], value=task.status, allow_blank=False)
         self.task_priority_input = Select(options=[(priority, priority) for priority in ["Low", "Medium", "High", "Urgent"]], value=task.priority, allow_blank=False)
         self.task_due_date_input = Input(value=to_string(task.due_date))
         self.database_action = "update"
@@ -171,6 +173,26 @@ class TaskManagerApp(App):
         await self.mount(self.dialog, before=self.query_one("#tasks-list"))
         self.task_title_input.focus()
 
+    async def action_open_status_dialog(self):
+        """
+            Open the status selection screen.
+            Call update_task_status if a value is returned from the screen
+        """
+        selected_item = self.task_list.index
+        if selected_item is not None:
+            task_item = self.task_list.children[selected_item]
+            if not task_item.id or not task_item.id.startswith("task_id-"):
+                return
+            self.selected_task_id = self.task_list.children[selected_item].id.replace("task_id-", "")
+            await self.push_screen(StatusScreen(STATUS_LABELS), self.update_task_status )
+
+    async def update_task_status(self, new_status):
+        self.task_service.update_task(
+            task_id = self.selected_task_id,
+            status = new_status
+        )    
+        await self.update_tasks_view()      
+            
     async def on_button_pressed(self, event: Button.Pressed):
         """Handle actions when buttons are pressed"""
         button_id = event.button.id
@@ -218,6 +240,8 @@ class TaskManagerApp(App):
         if event.key == "enter":
             if hasattr(self, "dialog") and isinstance(self.focused, Input): 
                 await self.handle_task_form_submission()
+        if event.key == "s":
+            await self.action_open_status_dialog()
             #else: 
             #    await self.action_mark_task_done()
 
