@@ -4,6 +4,16 @@ Screen {
     overflow-y: hidden;
 }
 
+StatusScreen {
+    align: center middle;
+
+    & > ListView {
+        padding: 2 4;
+        width: 100%;
+        height: auto;
+    }
+}
+
 #header-container {
     height: 10%; 
     padding-bottom: 0;
